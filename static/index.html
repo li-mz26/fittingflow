@@ -493,6 +493,10 @@
                         <div>🐍 Python</div>
                         <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">代码执行</div>
                     </div>
+                    <div class="node-template" draggable="true" data-type="if" ondragstart="dragStart(event, 'if')">
+                        <div>🔀 If/Else</div>
+                        <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">条件分支</div>
+                    </div>
                     <div class="node-template" draggable="true" data-type="end" ondragstart="dragStart(event, 'end')">
                         <div>✅ End</div>
                         <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">结束节点</div>
@@ -517,6 +521,30 @@ output = {'result': data}"></textarea>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeCodeEditor()">取消</button>
                 <button class="btn btn-primary" onclick="savePythonNode()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- If 条件编辑器模态框 -->
+    <div class="modal-overlay" id="ifEditorModal">
+        <div class="modal">
+            <div class="modal-title">🔀 条件分支编辑器</div>
+            <div style="margin-bottom: 10px;">
+                <label style="font-size: 0.9rem; color: #666;">条件表达式：</label>
+                <input type="text" id="conditionInput" class="input" 
+                    placeholder="data.get('score', 0) > 60" 
+                    style="font-family: monospace; margin-top: 5px;">
+            </div>
+            <div class="modal-hint">
+                💡 <strong>提示：</strong><br>
+                • <code>data</code> 是上游节点传来的数据字典<br>
+                • 条件为 <strong>True</strong> 时走第一个连接的分支<br>
+                • 条件为 <strong>False</strong> 时走第二个连接的分支<br>
+                • 示例：<code>data.get('score', 0) >= 60</code>、<code>data.get('age', 0) >= 18</code>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeIfEditor()">取消</button>
+                <button class="btn btn-primary" onclick="saveIfNode()">保存</button>
             </div>
         </div>
     </div>
@@ -594,6 +622,72 @@ output = {"result": data}`;
                 closeCodeEditor();
             }
         };
+        
+        // If 节点条件编辑器
+        let pendingIfNode = null;
+        
+        function showIfEditor(nodeName, x, y) {
+            pendingIfNode = { name: nodeName, x, y };
+            const modal = document.getElementById('ifEditorModal');
+            const input = document.getElementById('conditionInput');
+            input.value = '';
+            modal.classList.add('visible');
+            input.focus();
+        }
+        
+        function closeIfEditor() {
+            const modal = document.getElementById('ifEditorModal');
+            modal.classList.remove('visible');
+            pendingIfNode = null;
+        }
+        
+        async function saveIfNode() {
+            if (!pendingIfNode) return;
+            
+            const condition = document.getElementById('conditionInput').value.trim() || 'True';
+            const { name, x, y } = pendingIfNode;
+            
+            // 创建节点
+            const node = {
+                id: `node_${++nodeIdCounter}`,
+                name: name,
+                type: 'if',
+                x: x,
+                y: y,
+                condition: condition
+            };
+            nodes.push(node);
+            renderOneNode(node);
+            
+            // 发送到后端
+            if (currentWorkflow) {
+                try {
+                    await fetch(`/workflows/${encodeURIComponent(currentWorkflow)}/nodes`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            workflow_name: currentWorkflow,
+                            node_name: name,
+                            node_type: 'if',
+                            condition: condition,
+                            config: { node_type: 'if', condition: condition }
+                        })
+                    });
+                } catch (e) {
+                    console.error('Failed to add If node to backend:', e);
+                }
+            }
+            
+            closeIfEditor();
+            setStatus(`✅ 条件分支节点已添加: ${name} (条件: ${condition})`);
+        }
+        
+        document.getElementById('ifEditorModal').onclick = (e) => {
+            if (e.target.id === 'ifEditorModal') {
+                closeIfEditor();
+            }
+        };
+        
         let currentWorkflow = null;
         let workflows = [];
         let nodes = [];
@@ -794,6 +888,9 @@ output = {"result": data}`;
             // Python 节点需要编辑代码
             if (type === 'python') {
                 showCodeEditor(name, x, y);
+            } else if (type === 'if') {
+                // If 节点需要编辑条件
+                showIfEditor(name, x, y);
             } else {
                 addNode(name, type, x, y);
                 if (currentWorkflow) {

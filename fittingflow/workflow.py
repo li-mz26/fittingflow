@@ -96,37 +96,100 @@ class Workflow:
         return result
     
     async def run(self, input_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """执行工作流"""
+        """执行工作流（支持条件分支）"""
         context = Context()
         if input_data:
             context.update(input_data)
         
-        execution_order = self.topological_sort()
+        # 找到起始节点
+        if not self.start_node or self.start_node not in self.nodes:
+            return {"error": "No start node defined"}
         
-        node_outputs: Dict[str, Any] = {}
+        # 执行队列和已执行节点
+        executed_nodes: Dict[str, Any] = {}
+        execution_log: List[Dict] = []
         
-        for node_name in execution_order:
+        # BFS 执行，但支持条件分支
+        queue = deque([self.start_node])
+        visited = set()
+        
+        while queue:
+            node_name = queue.popleft()
+            
+            if node_name in visited:
+                continue
+            
+            if node_name not in self.nodes:
+                continue
+            
             node = self.nodes[node_name]
             
             # 收集所有前置节点的输出
             inputs = {}
             if node_name in self.reverse_edges:
                 for source_name in self.reverse_edges[node_name]:
-                    if source_name in node_outputs:
-                        source_output = node_outputs[source_name]
+                    if source_name in executed_nodes:
+                        source_output = executed_nodes[source_name]
                         if isinstance(source_output, dict):
                             inputs.update(source_output)
                         else:
                             inputs[source_name] = source_output
             
             # 执行节点
-            result = await node.execute(context, inputs)
-            node_outputs[node_name] = result
+            try:
+                result = await node.execute(context, inputs)
+                executed_nodes[node_name] = result
+                visited.add(node_name)
+                
+                # 记录执行日志
+                log_entry = {
+                    "node": node_name,
+                    "type": node.config.get("node_type", "unknown"),
+                    "status": "completed",
+                    "output": result
+                }
+                
+                # 处理条件分支
+                if node.config.get("node_type") == "if" and node_name in self.edges:
+                    condition_met = result.get("condition_met", False)
+                    # 获取该节点的所有下游节点
+                    targets = self.edges[node_name]
+                    if len(targets) >= 2:
+                        # 第一个连接是 True 分支，第二个是 False 分支
+                        if condition_met:
+                            queue.append(targets[0])
+                            log_entry["branch"] = "true"
+                        else:
+                            queue.append(targets[1])
+                            log_entry["branch"] = "false"
+                    elif len(targets) == 1:
+                        queue.append(targets[0])
+                elif node_name in self.edges:
+                    # 普通节点，添加所有下游节点
+                    for target in self.edges[node_name]:
+                        queue.append(target)
+                
+                execution_log.append(log_entry)
+                
+            except Exception as e:
+                execution_log.append({
+                    "node": node_name,
+                    "status": "failed",
+                    "error": str(e)
+                })
+                return {
+                    "workflow": self.name,
+                    "status": "failed",
+                    "error": str(e),
+                    "execution_log": execution_log,
+                    "nodes": {name: node.to_dict() for name, node in self.nodes.items()}
+                }
         
         return {
             "workflow": self.name,
             "status": "completed",
             "context": context.to_dict(),
+            "execution_log": execution_log,
             "nodes": {name: node.to_dict() for name, node in self.nodes.items()}
         }
     
