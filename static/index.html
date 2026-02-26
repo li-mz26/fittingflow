@@ -19,7 +19,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
@@ -34,29 +34,17 @@
             margin-bottom: 10px;
         }
         
-        .header p {
-            opacity: 0.9;
-        }
-        
         .main-content {
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 250px 1fr 250px;
             gap: 20px;
         }
         
-        .sidebar {
+        .panel {
             background: white;
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-        
-        .workspace {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            min-height: 600px;
         }
         
         .section-title {
@@ -64,6 +52,8 @@
             font-weight: 600;
             margin-bottom: 15px;
             color: #333;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
         }
         
         .btn {
@@ -74,6 +64,7 @@
             font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.2s;
+            width: 100%;
         }
         
         .btn-primary {
@@ -88,10 +79,6 @@
         .btn-secondary {
             background: #f0f0f0;
             color: #333;
-        }
-        
-        .btn-secondary:hover {
-            background: #e0e0e0;
         }
         
         .input {
@@ -119,7 +106,6 @@
             background: #f8f9fa;
             margin-bottom: 8px;
             cursor: pointer;
-            transition: all 0.2s;
         }
         
         .workflow-item:hover {
@@ -131,49 +117,143 @@
             color: white;
         }
         
-        .node {
-            display: inline-block;
-            padding: 15px 25px;
+        /* 节点库 */
+        .node-template {
+            padding: 12px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 12px;
-            margin: 10px;
+            border-radius: 8px;
             cursor: grab;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transition: transform 0.2s;
+            margin-bottom: 10px;
+            user-select: none;
         }
         
-        .node:hover {
+        .node-template:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
-        .node-type {
-            font-size: 0.8rem;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-        
-        .node-name {
-            font-weight: 600;
-        }
-        
+        /* 画布 */
         .canvas {
             background: #f8f9fa;
+            background-image: 
+                radial-gradient(circle, #ddd 1px, transparent 1px);
+            background-size: 20px 20px;
             border-radius: 8px;
-            min-height: 400px;
+            min-height: 500px;
             position: relative;
-            overflow: auto;
+            overflow: hidden;
         }
         
+        /* 工作流节点 */
+        .workflow-node {
+            position: absolute;
+            min-width: 150px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            cursor: move;
+        }
+        
+        .workflow-node.selected {
+            box-shadow: 0 0 0 3px #667eea, 0 6px 20px rgba(0,0,0,0.25);
+        }
+        
+        .node-header {
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .node-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .node-delete {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        
+        .node-body {
+            padding: 12px 15px;
+        }
+        
+        .node-type-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        /* 连接点 */
+        .port {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            cursor: crosshair;
+        }
+        
+        .port:hover {
+            background: #667eea;
+        }
+        
+        .port-input {
+            left: -7px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .port-output {
+            right: -7px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* SVG 连线层 */
+        .connections-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .connection-line {
+            fill: none;
+            stroke: #667eea;
+            stroke-width: 3;
+            pointer-events: stroke;
+            cursor: pointer;
+        }
+        
+        /* 工具栏 */
         .toolbar {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
+        }
+        
+        .toolbar .btn {
+            width: auto;
         }
         
         .status-bar {
-            margin-top: 20px;
+            margin-top: 15px;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
@@ -181,9 +261,19 @@
             font-size: 0.85rem;
             max-height: 200px;
             overflow: auto;
+            white-space: pre-wrap;
         }
         
-        @media (max-width: 768px) {
+        /* 属性面板 */
+        .property-panel {
+            display: none;
+        }
+        
+        .property-panel.visible {
+            display: block;
+        }
+        
+        @media (max-width: 1200px) {
             .main-content {
                 grid-template-columns: 1fr;
             }
@@ -194,53 +284,106 @@
     <div class="container">
         <div class="header">
             <h1>🔄 FittingFlow</h1>
-            <p>极简工作流编排系统</p>
+            <p>极简工作流编排系统 - 拖拽式编辑器</p>
         </div>
         
         <div class="main-content">
-            <div class="sidebar">
+            <!-- 左侧：工作流列表 -->
+            <div class="panel">
                 <div class="section-title">工作流</div>
                 <input type="text" id="newWorkflowName" class="input" placeholder="输入工作流名称">
-                <button class="btn btn-primary" onclick="createWorkflow()" style="width: 100%;">+ 创建工作流</button>
-                
-                <ul class="workflow-list" id="workflowList">
-                </ul>
+                <button class="btn btn-primary" onclick="createWorkflow()">+ 创建工作流</button>
+                <ul class="workflow-list" id="workflowList"></ul>
             </div>
             
-            <div class="workspace">
+            <!-- 中间：画布 -->
+            <div class="panel">
                 <div class="toolbar">
-                    <button class="btn btn-secondary" onclick="addNode()">+ 添加节点</button>
-                    <button class="btn btn-secondary" onclick="connectNodes()">🔗 连接节点</button>
-                    <button class="btn btn-primary" onclick="runWorkflow()">▶️ 运行工作流</button>
+                    <button class="btn btn-primary" onclick="runWorkflow()">▶️ 运行</button>
+                    <button class="btn btn-secondary" onclick="clearCanvas()">🗑️ 清空</button>
                 </div>
-                
                 <div class="canvas" id="canvas">
-                    <div style="padding: 20px; color: #999;">选择或创建一个工作流开始</div>
+                    <svg class="connections-layer" id="connectionsLayer"></svg>
                 </div>
-                
-                <div class="status-bar" id="statusBar">
-                    就绪
+                <div class="status-bar" id="statusBar">就绪 - 从右侧拖拽节点</div>
+            </div>
+            
+            <!-- 右侧：节点库 -->
+            <div class="panel">
+                <div class="section-title">节点库</div>
+                <div id="nodeLibrary">
+                    <div class="node-template" draggable="true" data-type="start" ondragstart="dragStart(event, 'start')">
+                        <div>🚀 Start</div>
+                        <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">起始节点</div>
+                    </div>
+                    <div class="node-template" draggable="true" data-type="process" ondragstart="dragStart(event, 'process')">
+                        <div>⚙️ Process</div>
+                        <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">处理节点</div>
+                    </div>
+                    <div class="node-template" draggable="true" data-type="end" ondragstart="dragStart(event, 'end')">
+                        <div>✅ End</div>
+                        <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">结束节点</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     
     <script>
+        // 简单的状态管理
         let currentWorkflow = null;
         let workflows = [];
+        let nodes = [];
+        let connections = [];
+        let selectedNode = null;
+        let nodeIdCounter = 0;
         
+        let draggingNode = null;
+        let dragOffset = { x: 0, y: 0 };
+        
+        let connecting = false;
+        let connectFrom = null;
+        
+        // 初始化
+        init();
+        
+        async function init() {
+            await fetchWorkflows();
+            
+            // 全局事件
+            const canvas = document.getElementById('canvas');
+            canvas.ondragover = (e) => {
+                e.preventDefault();
+                canvas.style.backgroundColor = '#e8f0fe';
+            };
+            canvas.ondragleave = () => {
+                canvas.style.backgroundColor = '';
+            };
+            canvas.ondrop = drop;
+            canvas.onclick = (e) => {
+                if (e.target.id === 'canvas' || e.target.id === 'connectionsLayer') {
+                    deselectAll();
+                }
+            };
+            
+            document.onmousemove = onMouseMove;
+            document.onmouseup = onMouseUp;
+        }
+        
+        // ========== 工作流管理 ==========
         async function fetchWorkflows() {
-            const response = await fetch('/workflows');
-            const data = await response.json();
-            workflows = data.workflows;
-            renderWorkflowList();
+            try {
+                const res = await fetch('/workflows');
+                const data = await res.json();
+                workflows = data.workflows;
+                renderWorkflowList();
+            } catch (e) {}
         }
         
         function renderWorkflowList() {
             const list = document.getElementById('workflowList');
             list.innerHTML = workflows.map(wf => `
-                <li class="workflow-item ${currentWorkflow === wf.name ? 'active' : ''}" 
-                    onclick="selectWorkflow('${wf.name}')">
+                <li class="workflow-item ${currentWorkflow === wf.name ? 'active' : ''}" onclick="loadWorkflow('${wf.name}')">
                     ${wf.name}
                 </li>
             `).join('');
@@ -251,99 +394,303 @@
             if (!name) return;
             
             try {
-                const response = await fetch('/workflows', {
+                await fetch('/workflows', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name })
                 });
-                
-                if (response.ok) {
-                    document.getElementById('newWorkflowName').value = '';
-                    await fetchWorkflows();
-                    selectWorkflow(name);
-                    updateStatus('✅ 工作流创建成功');
-                }
+                document.getElementById('newWorkflowName').value = '';
+                await fetchWorkflows();
+                loadWorkflow(name);
+                setStatus('✅ 工作流创建成功');
             } catch (e) {
-                updateStatus('❌ 创建失败: ' + e.message);
+                setStatus('❌ 创建失败');
             }
         }
         
-        async function selectWorkflow(name) {
+        async function loadWorkflow(name) {
             currentWorkflow = name;
             renderWorkflowList();
+            clearCanvas();
             
             try {
-                const response = await fetch(`/workflows/${name}`);
-                const workflow = await response.json();
-                renderCanvas(workflow);
+                const res = await fetch(`/workflows/${name}`);
+                const wf = await res.json();
+                
+                connections = wf.edges || [];
+                
+                wf.nodes.forEach((node, i) => {
+                    addNode(node.name, node.config?.node_type || 'basic', 50 + i * 200, 100);
+                });
+                
+                renderConnections();
+                setStatus(`✅ 已加载: ${name}`);
             } catch (e) {
-                updateStatus('❌ 加载失败: ' + e.message);
+                setStatus('❌ 加载失败');
             }
         }
         
-        function renderCanvas(workflow) {
+        // ========== 拖拽节点 ==========
+        function dragStart(e, type) {
+            e.dataTransfer.setData('type', type);
+        }
+        
+        function drop(e) {
+            e.preventDefault();
             const canvas = document.getElementById('canvas');
-            canvas.innerHTML = '';
+            canvas.style.backgroundColor = '';
             
-            if (workflow.nodes.length === 0) {
-                canvas.innerHTML = '<div style="padding: 20px; color: #999;">点击"添加节点"开始</div>';
-                return;
+            const type = e.dataTransfer.getData('type');
+            if (!type) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - 75;
+            const y = e.clientY - rect.top - 30;
+            
+            const name = `${type}_${++nodeIdCounter}`;
+            addNode(name, type, x, y);
+            
+            if (currentWorkflow) {
+                addNodeToBackend(name, type);
             }
             
-            workflow.nodes.forEach(node => {
-                const nodeEl = document.createElement('div');
-                nodeEl.className = 'node';
-                nodeEl.innerHTML = `
-                    <div class="node-type">${node.config?.node_type || 'basic'}</div>
-                    <div class="node-name">${node.name}</div>
-                `;
-                canvas.appendChild(nodeEl);
+            setStatus(`✅ 已添加: ${name}`);
+        }
+        
+        function addNode(name, type, x, y) {
+            const node = {
+                id: `node_${++nodeIdCounter}`,
+                name: name,
+                type: type,
+                x: x,
+                y: y
+            };
+            nodes.push(node);
+            renderOneNode(node);
+        }
+        
+        function renderOneNode(node) {
+            const canvas = document.getElementById('canvas');
+            
+            const el = document.createElement('div');
+            el.className = 'workflow-node';
+            el.id = node.id;
+            el.style.left = node.x + 'px';
+            el.style.top = node.y + 'px';
+            
+            el.innerHTML = `
+                <div class="node-header">
+                    <span class="node-title">${node.name}</span>
+                    <button class="node-delete">×</button>
+                </div>
+                <div class="node-body">
+                    <div class="node-type-label">${node.type}</div>
+                </div>
+                <div class="port port-input"></div>
+                <div class="port port-output"></div>
+            `;
+            
+            // 删除按钮
+            el.querySelector('.node-delete').onclick = (e) => {
+                e.stopPropagation();
+                removeNode(node.id);
+            };
+            
+            // 选择节点
+            el.onclick = (e) => {
+                if (e.target.classList.contains('port') || e.target.classList.contains('node-delete')) return;
+                e.stopPropagation();
+                selectNode(node.id);
+            };
+            
+            // 拖拽移动
+            el.onmousedown = (e) => {
+                if (e.target.classList.contains('port') || e.target.classList.contains('node-delete')) return;
+                draggingNode = node;
+                const nodeRect = el.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+                dragOffset = {
+                    x: e.clientX - nodeRect.left,
+                    y: e.clientY - nodeRect.top
+                };
+                selectNode(node.id);
+            };
+            
+            // 连接端口
+            el.querySelector('.port-output').onmousedown = (e) => {
+                e.stopPropagation();
+                connecting = true;
+                connectFrom = node;
+            };
+            
+            canvas.appendChild(el);
+        }
+        
+        function selectNode(id) {
+            deselectAll();
+            selectedNode = nodes.find(n => n.id === id);
+            if (selectedNode) {
+                document.getElementById(id).classList.add('selected');
+            }
+        }
+        
+        function deselectAll() {
+            document.querySelectorAll('.workflow-node').forEach(el => el.classList.remove('selected'));
+            selectedNode = null;
+        }
+        
+        function removeNode(id) {
+            nodes = nodes.filter(n => n.id !== id);
+            connections = connections.filter(c => c.source !== id && c.target !== id);
+            const el = document.getElementById(id);
+            if (el) el.remove();
+            renderConnections();
+            setStatus('✅ 节点已删除');
+        }
+        
+        // ========== 鼠标移动 ==========
+        function onMouseMove(e) {
+            const canvas = document.getElementById('canvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            if (draggingNode) {
+                draggingNode.x = e.clientX - rect.left - dragOffset.x;
+                draggingNode.y = e.clientY - rect.top - dragOffset.y;
+                
+                const el = document.getElementById(draggingNode.id);
+                el.style.left = draggingNode.x + 'px';
+                el.style.top = draggingNode.y + 'px';
+                
+                renderConnections();
+            }
+            
+            if (connecting) {
+                const svg = document.getElementById('connectionsLayer');
+                let tempLine = svg.querySelector('.temp-line');
+                if (!tempLine) {
+                    tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    tempLine.classList.add('temp-line');
+                    tempLine.setAttribute('fill', 'none');
+                    tempLine.setAttribute('stroke', '#999');
+                    tempLine.setAttribute('stroke-width', '2');
+                    tempLine.setAttribute('stroke-dasharray', '5,5');
+                    svg.appendChild(tempLine);
+                }
+                
+                const fromEl = document.getElementById(connectFrom.id);
+                const fromRect = fromEl.getBoundingClientRect();
+                const x1 = fromRect.right - rect.left;
+                const y1 = fromRect.top + fromRect.height / 2 - rect.top;
+                const x2 = e.clientX - rect.left;
+                const y2 = e.clientY - rect.top;
+                
+                tempLine.setAttribute('d', bezier(x1, y1, x2, y2));
+            }
+        }
+        
+        function onMouseUp(e) {
+            if (draggingNode) {
+                draggingNode = null;
+            }
+            
+            if (connecting) {
+                const svg = document.getElementById('connectionsLayer');
+                const temp = svg.querySelector('.temp-line');
+                if (temp) temp.remove();
+                
+                const target = e.target;
+                if (target.classList.contains('port-input')) {
+                    const targetNodeEl = target.closest('.workflow-node');
+                    if (targetNodeEl && targetNodeEl.id !== connectFrom.id) {
+                        addConnection(connectFrom.id, targetNodeEl.id);
+                        if (currentWorkflow) {
+                            const fromName = nodes.find(n => n.id === connectFrom.id).name;
+                            const toName = nodes.find(n => n.id === targetNodeEl.id).name;
+                            connectNodesBackend(fromName, toName);
+                        }
+                    }
+                }
+                
+                connecting = false;
+                connectFrom = null;
+            }
+        }
+        
+        // ========== 连线 ==========
+        function addConnection(fromId, toId) {
+            const exists = connections.some(c => c.source === fromId && c.target === toId);
+            if (exists) return;
+            
+            connections.push({ source: fromId, target: toId });
+            renderConnections();
+            setStatus('✅ 已连接');
+        }
+        
+        function renderConnections() {
+            const svg = document.getElementById('connectionsLayer');
+            const canvas = document.getElementById('canvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            const temp = svg.querySelector('.temp-line');
+            svg.innerHTML = '';
+            if (temp) svg.appendChild(temp);
+            
+            connections.forEach((conn, i) => {
+                const fromNode = nodes.find(n => n.id === conn.source);
+                const toNode = nodes.find(n => n.id === conn.target);
+                if (!fromNode || !toNode) return;
+                
+                const fromEl = document.getElementById(fromNode.id);
+                const toEl = document.getElementById(toNode.id);
+                if (!fromEl || !toEl) return;
+                
+                const fromRect = fromEl.getBoundingClientRect();
+                const toRect = toEl.getBoundingClientRect();
+                
+                const x1 = fromRect.right - rect.left;
+                const y1 = fromRect.top + fromRect.height / 2 - rect.top;
+                const x2 = toRect.left - rect.left;
+                const y2 = toRect.top + toRect.height / 2 - rect.top;
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('class', 'connection-line');
+                path.setAttribute('d', bezier(x1, y1, x2, y2));
+                path.onclick = () => {
+                    if (confirm('删除连线？')) {
+                        connections.splice(i, 1);
+                        renderConnections();
+                    }
+                };
+                svg.appendChild(path);
             });
         }
         
-        async function addNode() {
-            if (!currentWorkflow) {
-                updateStatus('❌ 请先选择一个工作流');
-                return;
-            }
-            
-            const nodeName = prompt('节点名称:');
-            if (!nodeName) return;
-            
+        function bezier(x1, y1, x2, y2) {
+            const dx = Math.abs(x2 - x1) * 0.5;
+            return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+        }
+        
+        // ========== 后端同步 ==========
+        async function addNodeToBackend(name, type) {
+            if (!currentWorkflow) return;
             try {
-                const response = await fetch(`/workflows/${currentWorkflow}/nodes`, {
+                await fetch(`/workflows/${currentWorkflow}/nodes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         workflow_name: currentWorkflow,
-                        node_name: nodeName,
-                        node_type: 'basic',
-                        config: {}
+                        node_name: name,
+                        node_type: type,
+                        config: { node_type: type }
                     })
                 });
-                
-                if (response.ok) {
-                    await selectWorkflow(currentWorkflow);
-                    updateStatus('✅ 节点添加成功');
-                }
-            } catch (e) {
-                updateStatus('❌ 添加节点失败: ' + e.message);
-            }
+            } catch (e) {}
         }
         
-        async function connectNodes() {
-            if (!currentWorkflow) {
-                updateStatus('❌ 请先选择一个工作流');
-                return;
-            }
-            
-            const source = prompt('源节点名称:');
-            const target = prompt('目标节点名称:');
-            
-            if (!source || !target) return;
-            
+        async function connectNodesBackend(source, target) {
+            if (!currentWorkflow) return;
             try {
-                const response = await fetch(`/workflows/${currentWorkflow}/connect`, {
+                await fetch(`/workflows/${currentWorkflow}/connect`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -352,47 +699,41 @@
                         target_node: target
                     })
                 });
-                
-                if (response.ok) {
-                    updateStatus('✅ 节点连接成功');
-                }
-            } catch (e) {
-                updateStatus('❌ 连接失败: ' + e.message);
-            }
+            } catch (e) {}
         }
         
+        // ========== 其他 ==========
         async function runWorkflow() {
             if (!currentWorkflow) {
-                updateStatus('❌ 请先选择一个工作流');
+                setStatus('❌ 请先选择工作流');
                 return;
             }
             
-            updateStatus('⏳ 运行中...');
-            
+            setStatus('⏳ 运行中...');
             try {
-                const response = await fetch(`/workflows/${currentWorkflow}/run`, {
+                const res = await fetch(`/workflows/${currentWorkflow}/run`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        workflow_name: currentWorkflow,
-                        input_data: {}
-                    })
+                    body: JSON.stringify({ workflow_name: currentWorkflow, input_data: {} })
                 });
-                
-                const result = await response.json();
-                updateStatus('✅ 运行完成\n' + JSON.stringify(result, null, 2));
+                const result = await res.json();
+                setStatus('✅ 运行完成\n' + JSON.stringify(result, null, 2));
             } catch (e) {
-                updateStatus('❌ 运行失败: ' + e.message);
+                setStatus('❌ 运行失败');
             }
         }
         
-        function updateStatus(message) {
-            const statusBar = document.getElementById('statusBar');
-            statusBar.textContent = message;
+        function clearCanvas() {
+            nodes = [];
+            connections = [];
+            selectedNode = null;
+            const canvas = document.getElementById('canvas');
+            canvas.innerHTML = '<svg class="connections-layer" id="connectionsLayer"></svg>';
         }
         
-        // 初始化
-        fetchWorkflows();
+        function setStatus(msg) {
+            document.getElementById('statusBar').textContent = msg;
+        }
     </script>
 </body>
 </html>
