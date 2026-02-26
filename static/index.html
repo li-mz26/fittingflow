@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FittingFlow - 极简工作流</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .workspace {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            min-height: 600px;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd6;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .workflow-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+        
+        .workflow-item {
+            padding: 12px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .workflow-item:hover {
+            background: #e9ecef;
+        }
+        
+        .workflow-item.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .node {
+            display: inline-block;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin: 10px;
+            cursor: grab;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+        }
+        
+        .node:hover {
+            transform: translateY(-2px);
+        }
+        
+        .node-type {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .node-name {
+            font-weight: 600;
+        }
+        
+        .canvas {
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-height: 400px;
+            position: relative;
+            overflow: auto;
+        }
+        
+        .toolbar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .status-bar {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 FittingFlow</h1>
+            <p>极简工作流编排系统</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="section-title">工作流</div>
+                <input type="text" id="newWorkflowName" class="input" placeholder="输入工作流名称">
+                <button class="btn btn-primary" onclick="createWorkflow()" style="width: 100%;">+ 创建工作流</button>
+                
+                <ul class="workflow-list" id="workflowList">
+                </ul>
+            </div>
+            
+            <div class="workspace">
+                <div class="toolbar">
+                    <button class="btn btn-secondary" onclick="addNode()">+ 添加节点</button>
+                    <button class="btn btn-secondary" onclick="connectNodes()">🔗 连接节点</button>
+                    <button class="btn btn-primary" onclick="runWorkflow()">▶️ 运行工作流</button>
+                </div>
+                
+                <div class="canvas" id="canvas">
+                    <div style="padding: 20px; color: #999;">选择或创建一个工作流开始</div>
+                </div>
+                
+                <div class="status-bar" id="statusBar">
+                    就绪
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentWorkflow = null;
+        let workflows = [];
+        
+        async function fetchWorkflows() {
+            const response = await fetch('/workflows');
+            const data = await response.json();
+            workflows = data.workflows;
+            renderWorkflowList();
+        }
+        
+        function renderWorkflowList() {
+            const list = document.getElementById('workflowList');
+            list.innerHTML = workflows.map(wf => `
+                <li class="workflow-item ${currentWorkflow === wf.name ? 'active' : ''}" 
+                    onclick="selectWorkflow('${wf.name}')">
+                    ${wf.name}
+                </li>
+            `).join('');
+        }
+        
+        async function createWorkflow() {
+            const name = document.getElementById('newWorkflowName').value.trim();
+            if (!name) return;
+            
+            try {
+                const response = await fetch('/workflows', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('newWorkflowName').value = '';
+                    await fetchWorkflows();
+                    selectWorkflow(name);
+                    updateStatus('✅ 工作流创建成功');
+                }
+            } catch (e) {
+                updateStatus('❌ 创建失败: ' + e.message);
+            }
+        }
+        
+        async function selectWorkflow(name) {
+            currentWorkflow = name;
+            renderWorkflowList();
+            
+            try {
+                const response = await fetch(`/workflows/${name}`);
+                const workflow = await response.json();
+                renderCanvas(workflow);
+            } catch (e) {
+                updateStatus('❌ 加载失败: ' + e.message);
+            }
+        }
+        
+        function renderCanvas(workflow) {
+            const canvas = document.getElementById('canvas');
+            canvas.innerHTML = '';
+            
+            if (workflow.nodes.length === 0) {
+                canvas.innerHTML = '<div style="padding: 20px; color: #999;">点击"添加节点"开始</div>';
+                return;
+            }
+            
+            workflow.nodes.forEach(node => {
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'node';
+                nodeEl.innerHTML = `
+                    <div class="node-type">${node.config?.node_type || 'basic'}</div>
+                    <div class="node-name">${node.name}</div>
+                `;
+                canvas.appendChild(nodeEl);
+            });
+        }
+        
+        async function addNode() {
+            if (!currentWorkflow) {
+                updateStatus('❌ 请先选择一个工作流');
+                return;
+            }
+            
+            const nodeName = prompt('节点名称:');
+            if (!nodeName) return;
+            
+            try {
+                const response = await fetch(`/workflows/${currentWorkflow}/nodes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        workflow_name: currentWorkflow,
+                        node_name: nodeName,
+                        node_type: 'basic',
+                        config: {}
+                    })
+                });
+                
+                if (response.ok) {
+                    await selectWorkflow(currentWorkflow);
+                    updateStatus('✅ 节点添加成功');
+                }
+            } catch (e) {
+                updateStatus('❌ 添加节点失败: ' + e.message);
+            }
+        }
+        
+        async function connectNodes() {
+            if (!currentWorkflow) {
+                updateStatus('❌ 请先选择一个工作流');
+                return;
+            }
+            
+            const source = prompt('源节点名称:');
+            const target = prompt('目标节点名称:');
+            
+            if (!source || !target) return;
+            
+            try {
+                const response = await fetch(`/workflows/${currentWorkflow}/connect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        workflow_name: currentWorkflow,
+                        source_node: source,
+                        target_node: target
+                    })
+                });
+                
+                if (response.ok) {
+                    updateStatus('✅ 节点连接成功');
+                }
+            } catch (e) {
+                updateStatus('❌ 连接失败: ' + e.message);
+            }
+        }
+        
+        async function runWorkflow() {
+            if (!currentWorkflow) {
+                updateStatus('❌ 请先选择一个工作流');
+                return;
+            }
+            
+            updateStatus('⏳ 运行中...');
+            
+            try {
+                const response = await fetch(`/workflows/${currentWorkflow}/run`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        workflow_name: currentWorkflow,
+                        input_data: {}
+                    })
+                });
+                
+                const result = await response.json();
+                updateStatus('✅ 运行完成\n' + JSON.stringify(result, null, 2));
+            } catch (e) {
+                updateStatus('❌ 运行失败: ' + e.message);
+            }
+        }
+        
+        function updateStatus(message) {
+            const statusBar = document.getElementById('statusBar');
+            statusBar.textContent = message;
+        }
+        
+        // 初始化
+        fetchWorkflows();
+    </script>
+</body>
+</html>
