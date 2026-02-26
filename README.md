@@ -11,6 +11,20 @@
 
 ## 快速开始
 
+### 使用 uv (推荐)
+
+```bash
+# 安装依赖
+uv sync
+
+# 启动服务
+uv run python main.py
+# 或
+make run
+```
+
+### 使用 pip
+
 ```bash
 # 安装依赖
 pip install -r requirements.txt
@@ -19,12 +33,24 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## 可用命令
+
+| 命令 | 说明 |
+|------|------|
+| `make install` | 安装依赖 |
+| `make dev` | 安装开发依赖 |
+| `make run` | 启动服务 |
+| `make example` | 运行示例 |
+| `make test` | 运行测试 |
+| `make format` | 格式化代码 |
+| `make lint` | 代码检查 |
+
 ## 示例
 
 创建一个简单的工作流：
 
 ```python
-from fittingflow import Workflow, Node
+from fittingflow import Workflow
 
 # 创建工作流
 workflow = Workflow()
@@ -44,4 +70,10 @@ workflow.connect(start, process)
 # 执行工作流
 result = workflow.run()
 print(result)
+```
+
+或者运行内置示例：
+
+```bash
+make example
 ```
