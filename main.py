@@ -185,7 +185,7 @@ def add_node(name: str, request: AddNodeRequest):
         code = request.code or request.config.get("code", "") if request.config else ""
         default_code = '''# data 是输入数据字典
 # 将结果赋值给 output 变量
-# 可以使用 tools.call("tool_name", {"param": "value"}) 调用外部工具
+# 可以通过 tools.call_tool_sync("tool_name", {"param": "value"}) 调用外部工具
 
 output = {"result": data}
 '''
@@ -194,38 +194,20 @@ output = {"result": data}
         # 获取全局工具网关
         gateway = tool_gateway
         
-        async def python_node(data: Dict[str, Any]) -> Dict[str, Any]:
+        def python_node(data: Dict[str, Any]) -> Dict[str, Any]:
             try:
-                # 创建一个同步调用函数
-                def call_tool_sync(tool_name: str, params: dict = None):
+                # 创建同步调用函数
+                def call_tool(tool_name: str, params: dict = None):
                     return gateway.call_tool_sync(tool_name, params)
                 
                 local_vars = {
                     "data": data,
                     "output": {},
                     "tools": gateway,
-                    "call_tool": call_tool_sync
+                    "call_tool": call_tool
                 }
                 
-                # 执行代码（支持 await）
-                try:
-                    # 尝试异步执行
-                    exec_globals = {"__builtins__": __builtins__}
-                    exec(actual_code, exec_globals, local_vars)
-                except SyntaxError as se:
-                    # 如果有 await 语法，使用异步执行
-                    if "await" in actual_code:
-                        # 创建异步函数
-                        async_code = f'''
-async def _run():
-{chr(10).join("    " + line for line in actual_code.split(chr(10)))}
-'''
-                        async_globals = {"__builtins__": __builtins__, "tools": gateway}
-                        exec(async_code, async_globals, local_vars)
-                        result = await local_vars["_run"]()
-                        return result if result else local_vars.get("output", {})
-                    raise se
-                
+                exec(actual_code, {}, local_vars)
                 return local_vars.get("output", {})
             except Exception as e:
                 return {"error": str(e), "output": {}}

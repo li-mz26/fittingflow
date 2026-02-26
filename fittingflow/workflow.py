@@ -4,6 +4,14 @@ from .node import Node, NodeStatus
 from .context import Context
 
 
+class WorkflowStatus:
+    """工作流运行状态"""
+    PENDING = "pending"      # 待执行
+    RUNNING = "running"      # 执行中
+    COMPLETED = "completed" # 已完成
+    FAILED = "failed"       # 失败
+
+
 class Workflow:
     """工作流编排器"""
     
@@ -13,6 +21,9 @@ class Workflow:
         self.edges: Dict[str, List[str]] = {}  # source -> [targets]
         self.reverse_edges: Dict[str, List[str]] = {}  # target -> [sources]
         self.start_node: Optional[str] = None
+        self.status: str = WorkflowStatus.PENDING
+        self.last_run_time: Optional[float] = None
+        self.last_error: Optional[str] = None
     
     def node(self, name: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
         """装饰器，添加节点到工作流"""
@@ -97,13 +108,26 @@ class Workflow:
     
     async def run(self, input_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """执行工作流（支持条件分支）"""
+        import time
+        
+        # 设置运行状态
+        self.status = WorkflowStatus.RUNNING
+        self.last_run_time = time.time()
+        self.last_error = None
+        
         context = Context()
         if input_data:
             context.update(input_data)
         
         # 找到起始节点
         if not self.start_node or self.start_node not in self.nodes:
-            return {"error": "No start node defined"}
+            self.status = WorkflowStatus.FAILED
+            self.last_error = "No start node defined"
+            return {
+                "workflow": self.name,
+                "status": self.status,
+                "error": self.last_error
+            }
         
         # 执行队列和已执行节点
         executed_nodes: Dict[str, Any] = {}
@@ -177,17 +201,20 @@ class Workflow:
                     "status": "failed",
                     "error": str(e)
                 })
+                self.status = WorkflowStatus.FAILED
+                self.last_error = str(e)
                 return {
                     "workflow": self.name,
-                    "status": "failed",
+                    "status": self.status,
                     "error": str(e),
                     "execution_log": execution_log,
                     "nodes": {name: node.to_dict() for name, node in self.nodes.items()}
                 }
         
+        self.status = WorkflowStatus.COMPLETED
         return {
             "workflow": self.name,
-            "status": "completed",
+            "status": self.status,
             "context": context.to_dict(),
             "execution_log": execution_log,
             "nodes": {name: node.to_dict() for name, node in self.nodes.items()}
@@ -197,5 +224,8 @@ class Workflow:
         return {
             "name": self.name,
             "nodes": [node.to_dict() for node in self.nodes.values()],
-            "edges": [{"source": s, "target": t} for s in self.edges for t in self.edges[s]]
+            "edges": [{"source": s, "target": t} for s in self.edges for t in self.edges[s]],
+            "status": self.status,
+            "last_run_time": self.last_run_time,
+            "last_error": self.last_error
         }
