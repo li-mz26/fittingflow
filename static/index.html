@@ -11,40 +11,68 @@
             box-sizing: border-box;
         }
         
-        body {
+        html, body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            height: 100%;
+            overflow: hidden;
         }
         
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
         }
         
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
         }
         
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
         }
         
         .main-content {
-            display: grid;
-            grid-template-columns: 250px 1fr 250px;
-            gap: 20px;
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            min-height: 0;
         }
         
         .panel {
             background: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel-left {
+            width: 220px;
+            flex-shrink: 0;
+        }
+        
+        .panel-center {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .panel-right {
+            width: 180px;
+            flex-shrink: 0;
         }
         
         .section-title {
@@ -97,7 +125,9 @@
         
         .workflow-list {
             list-style: none;
-            margin-top: 15px;
+            margin-top: 10px;
+            overflow-y: auto;
+            flex: 1;
         }
         
         .workflow-item {
@@ -140,9 +170,64 @@
                 radial-gradient(circle, #ddd 1px, transparent 1px);
             background-size: 20px 20px;
             border-radius: 8px;
-            min-height: 500px;
+            flex: 1;
             position: relative;
             overflow: hidden;
+            min-height: 0;
+            cursor: grab;
+        }
+        
+        .canvas.panning {
+            cursor: grabbing;
+        }
+        
+        .canvas-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: 0 0;
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 100;
+        }
+        
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .zoom-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .zoom-level {
+            width: 50px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            font-size: 0.8rem;
+            font-weight: 500;
         }
         
         /* 工作流节点 */
@@ -243,9 +328,10 @@
         
         /* 工具栏 */
         .toolbar {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             display: flex;
             gap: 10px;
+            flex-shrink: 0;
         }
         
         .toolbar .btn {
@@ -253,15 +339,16 @@
         }
         
         .status-bar {
-            margin-top: 15px;
-            padding: 15px;
+            margin-top: 10px;
+            padding: 10px;
             background: #f8f9fa;
             border-radius: 8px;
             font-family: monospace;
-            font-size: 0.85rem;
-            max-height: 200px;
+            font-size: 0.8rem;
+            max-height: 120px;
             overflow: auto;
             white-space: pre-wrap;
+            flex-shrink: 0;
         }
         
         /* 属性面板 */
@@ -273,9 +360,83 @@
             display: block;
         }
         
-        @media (max-width: 1200px) {
+        /* 代码编辑器模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-overlay.visible {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            width: 600px;
+            max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .code-editor {
+            width: 100%;
+            min-height: 200px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.9rem;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            background: #f8f9fa;
+            line-height: 1.5;
+        }
+        
+        .code-editor:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+        
+        .modal-actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 6px;
+        }
+        
+        @media (max-width: 900px) {
             .main-content {
-                grid-template-columns: 1fr;
+                flex-direction: column;
+            }
+            .panel-left, .panel-right {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
             }
         }
     </style>
@@ -289,7 +450,7 @@
         
         <div class="main-content">
             <!-- 左侧：工作流列表 -->
-            <div class="panel">
+            <div class="panel panel-left">
                 <div class="section-title">工作流</div>
                 <input type="text" id="newWorkflowName" class="input" placeholder="输入工作流名称">
                 <button class="btn btn-primary" onclick="createWorkflow()">+ 创建工作流</button>
@@ -297,19 +458,27 @@
             </div>
             
             <!-- 中间：画布 -->
-            <div class="panel">
+            <div class="panel panel-center">
                 <div class="toolbar">
                     <button class="btn btn-primary" onclick="runWorkflow()">▶️ 运行</button>
                     <button class="btn btn-secondary" onclick="clearCanvas()">🗑️ 清空</button>
                 </div>
                 <div class="canvas" id="canvas">
-                    <svg class="connections-layer" id="connectionsLayer"></svg>
+                    <div class="canvas-content" id="canvasContent">
+                        <svg class="connections-layer" id="connectionsLayer"></svg>
+                    </div>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" onclick="zoomOut()">−</button>
+                        <div class="zoom-level" id="zoomLevel">100%</div>
+                        <button class="zoom-btn" onclick="zoomIn()">+</button>
+                        <button class="zoom-btn" onclick="resetZoom()" title="重置">⟲</button>
+                    </div>
                 </div>
                 <div class="status-bar" id="statusBar">就绪 - 从右侧拖拽节点</div>
             </div>
             
             <!-- 右侧：节点库 -->
-            <div class="panel">
+            <div class="panel panel-right">
                 <div class="section-title">节点库</div>
                 <div id="nodeLibrary">
                     <div class="node-template" draggable="true" data-type="start" ondragstart="dragStart(event, 'start')">
@@ -320,6 +489,10 @@
                         <div>⚙️ Process</div>
                         <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">处理节点</div>
                     </div>
+                    <div class="node-template" draggable="true" data-type="python" ondragstart="dragStart(event, 'python')">
+                        <div>🐍 Python</div>
+                        <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">代码执行</div>
+                    </div>
                     <div class="node-template" draggable="true" data-type="end" ondragstart="dragStart(event, 'end')">
                         <div>✅ End</div>
                         <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">结束节点</div>
@@ -329,8 +502,98 @@
         </div>
     </div>
     
+    <!-- Python 代码编辑器模态框 -->
+    <div class="modal-overlay" id="codeEditorModal">
+        <div class="modal">
+            <div class="modal-title">🐍 Python 代码编辑器</div>
+            <textarea class="code-editor" id="codeEditor" placeholder="# 在这里编写 Python 代码...
+# data 是输入数据字典
+# 将结果赋值给 output 变量
+
+output = {'result': data}"></textarea>
+            <div class="modal-hint">
+                💡 <strong>提示：</strong><code>data</code> 变量包含上游节点的输出数据，将执行结果赋值给 <code>output</code> 变量即可传递给下游节点。
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeCodeEditor()">取消</button>
+                <button class="btn btn-primary" onclick="savePythonNode()">保存</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        // 简单的状态管理
+        // Python 节点代码编辑器
+        let pendingPythonNode = null;
+        
+        const defaultPythonCode = `# data 是输入数据字典
+# 将结果赋值给 output 变量
+# 示例：
+# output = {"sum": data.get("a", 0) + data.get("b", 0)}
+
+output = {"result": data}`;
+        
+        function showCodeEditor(nodeName, x, y) {
+            pendingPythonNode = { name: nodeName, x, y };
+            const modal = document.getElementById('codeEditorModal');
+            const editor = document.getElementById('codeEditor');
+            editor.value = defaultPythonCode;
+            modal.classList.add('visible');
+            editor.focus();
+        }
+        
+        function closeCodeEditor() {
+            const modal = document.getElementById('codeEditorModal');
+            modal.classList.remove('visible');
+            pendingPythonNode = null;
+        }
+        
+        async function savePythonNode() {
+            if (!pendingPythonNode) return;
+            
+            const code = document.getElementById('codeEditor').value;
+            const { name, x, y } = pendingPythonNode;
+            
+            // 创建节点
+            const node = {
+                id: `node_${++nodeIdCounter}`,
+                name: name,
+                type: 'python',
+                x: x,
+                y: y,
+                code: code
+            };
+            nodes.push(node);
+            renderOneNode(node);
+            
+            // 发送到后端
+            if (currentWorkflow) {
+                try {
+                    await fetch(`/workflows/${encodeURIComponent(currentWorkflow)}/nodes`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            workflow_name: currentWorkflow,
+                            node_name: name,
+                            node_type: 'python',
+                            code: code,
+                            config: { node_type: 'python', code: code }
+                        })
+                    });
+                } catch (e) {
+                    console.error('Failed to add Python node to backend:', e);
+                }
+            }
+            
+            closeCodeEditor();
+            setStatus(`✅ Python 节点已添加: ${name}`);
+        }
+        
+        // 点击模态框外部关闭
+        document.getElementById('codeEditorModal').onclick = (e) => {
+            if (e.target.id === 'codeEditorModal') {
+                closeCodeEditor();
+            }
+        };
         let currentWorkflow = null;
         let workflows = [];
         let nodes = [];
@@ -344,6 +607,16 @@
         let connecting = false;
         let connectFrom = null;
         
+        // 画布平移和缩放状态
+        let canvasState = {
+            scale: 1,
+            panX: 0,
+            panY: 0,
+            isPanning: false,
+            panStartX: 0,
+            panStartY: 0
+        };
+        
         // 初始化
         init();
         
@@ -352,6 +625,8 @@
             
             // 全局事件
             const canvas = document.getElementById('canvas');
+            const canvasContent = document.getElementById('canvasContent');
+            
             canvas.ondragover = (e) => {
                 e.preventDefault();
                 canvas.style.backgroundColor = '#e8f0fe';
@@ -361,13 +636,58 @@
             };
             canvas.ondrop = drop;
             canvas.onclick = (e) => {
-                if (e.target.id === 'canvas' || e.target.id === 'connectionsLayer') {
+                // 只有点击画布本身时才取消选择，不点击节点或连线
+                if (e.target.id === 'canvas' || e.target.id === 'canvasContent') {
                     deselectAll();
+                }
+            };
+            
+            // 滚轮缩放
+            canvas.onwheel = (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.max(0.3, Math.min(3, canvasState.scale * delta));
+                
+                // 以鼠标位置为中心缩放
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const scaleRatio = newScale / canvasState.scale;
+                canvasState.panX = mouseX - (mouseX - canvasState.panX) * scaleRatio;
+                canvasState.panY = mouseY - (mouseY - canvasState.panY) * scaleRatio;
+                canvasState.scale = newScale;
+                
+                updateCanvasTransform();
+            };
+            
+            // 画布平移（空格+拖动 或 中键拖动）
+            canvas.onmousedown = (e) => {
+                if (e.button === 1 || (e.button === 0 && e.code === 'Space')) {
+                    // 中键或空格键+左键
+                    e.preventDefault();
+                    canvasState.isPanning = true;
+                    canvasState.panStartX = e.clientX - canvasState.panX;
+                    canvasState.panStartY = e.clientY - canvasState.panY;
+                    canvas.classList.add('panning');
                 }
             };
             
             document.onmousemove = onMouseMove;
             document.onmouseup = onMouseUp;
+            
+            // 空格键监听
+            document.onkeydown = (e) => {
+                if (e.code === 'Space' && !e.repeat && e.target === document.body) {
+                    canvas.style.cursor = 'grab';
+                }
+            };
+            document.onkeyup = (e) => {
+                if (e.code === 'Space') {
+                    canvas.style.cursor = 'grab';
+                    canvas.classList.remove('panning');
+                }
+            };
         }
         
         // ========== 工作流管理 ==========
@@ -391,20 +711,30 @@
         
         async function createWorkflow() {
             const name = document.getElementById('newWorkflowName').value.trim();
-            if (!name) return;
+            if (!name) {
+                setStatus('❌ 请输入工作流名称');
+                return;
+            }
             
             try {
-                await fetch('/workflows', {
+                const res = await fetch('/workflows', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name })
                 });
+                
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || '创建失败');
+                }
+                
                 document.getElementById('newWorkflowName').value = '';
                 await fetchWorkflows();
                 loadWorkflow(name);
                 setStatus('✅ 工作流创建成功');
             } catch (e) {
-                setStatus('❌ 创建失败');
+                setStatus('❌ ' + e.message);
+                console.error(e);
             }
         }
         
@@ -412,21 +742,32 @@
             currentWorkflow = name;
             renderWorkflowList();
             clearCanvas();
+            resetZoom(); // 重置画布视图
             
             try {
-                const res = await fetch(`/workflows/${name}`);
+                const res = await fetch(`/workflows/${encodeURIComponent(name)}`);
+                if (!res.ok) throw new Error('Failed to load');
                 const wf = await res.json();
                 
-                connections = wf.edges || [];
+                // 正确解析 edges - 后端返回的是 {source, target} 格式
+                connections = (wf.edges || []).map(e => ({
+                    source: e.source,
+                    target: e.target
+                }));
+                
+                // 重置节点 ID 计数器
+                nodeIdCounter = 0;
                 
                 wf.nodes.forEach((node, i) => {
-                    addNode(node.name, node.config?.node_type || 'basic', 50 + i * 200, 100);
+                    const nodeType = node.config?.node_type || node.config?._node_type || 'basic';
+                    addNode(node.name, nodeType, 50 + i * 200, 100);
                 });
                 
                 renderConnections();
-                setStatus(`✅ 已加载: ${name}`);
+                setStatus(`✅ 已加载: ${name} (${wf.nodes.length} 个节点)`);
             } catch (e) {
-                setStatus('❌ 加载失败');
+                setStatus('❌ 加载失败: ' + e.message);
+                console.error(e);
             }
         }
         
@@ -444,14 +785,20 @@
             if (!type) return;
             
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left - 75;
-            const y = e.clientY - rect.top - 30;
+            // 考虑缩放和平移
+            const x = (e.clientX - rect.left - canvasState.panX) / canvasState.scale - 75;
+            const y = (e.clientY - rect.top - canvasState.panY) / canvasState.scale - 30;
             
             const name = `${type}_${++nodeIdCounter}`;
-            addNode(name, type, x, y);
             
-            if (currentWorkflow) {
-                addNodeToBackend(name, type);
+            // Python 节点需要编辑代码
+            if (type === 'python') {
+                showCodeEditor(name, x, y);
+            } else {
+                addNode(name, type, x, y);
+                if (currentWorkflow) {
+                    addNodeToBackend(name, type);
+                }
             }
             
             setStatus(`✅ 已添加: ${name}`);
@@ -470,7 +817,7 @@
         }
         
         function renderOneNode(node) {
-            const canvas = document.getElementById('canvas');
+            const canvasContent = document.getElementById('canvasContent');
             
             const el = document.createElement('div');
             el.className = 'workflow-node';
@@ -508,7 +855,7 @@
                 if (e.target.classList.contains('port') || e.target.classList.contains('node-delete')) return;
                 draggingNode = node;
                 const nodeRect = el.getBoundingClientRect();
-                const canvasRect = canvas.getBoundingClientRect();
+                const canvasRect = document.getElementById('canvas').getBoundingClientRect();
                 dragOffset = {
                     x: e.clientX - nodeRect.left,
                     y: e.clientY - nodeRect.top
@@ -523,7 +870,7 @@
                 connectFrom = node;
             };
             
-            canvas.appendChild(el);
+            canvasContent.appendChild(el);
         }
         
         function selectNode(id) {
@@ -551,15 +898,27 @@
         // ========== 鼠标移动 ==========
         function onMouseMove(e) {
             const canvas = document.getElementById('canvas');
+            const canvasContent = document.getElementById('canvasContent');
             const rect = canvas.getBoundingClientRect();
             
+            // 画布平移
+            if (canvasState.isPanning) {
+                canvasState.panX = e.clientX - canvasState.panStartX;
+                canvasState.panY = e.clientY - canvasState.panStartY;
+                updateCanvasTransform();
+                return;
+            }
+            
             if (draggingNode) {
-                draggingNode.x = e.clientX - rect.left - dragOffset.x;
-                draggingNode.y = e.clientY - rect.top - dragOffset.y;
+                // 考虑缩放和偏移
+                const x = (e.clientX - rect.left - dragOffset.x - canvasState.panX) / canvasState.scale;
+                const y = (e.clientY - rect.top - dragOffset.y - canvasState.panY) / canvasState.scale;
+                draggingNode.x = x;
+                draggingNode.y = y;
                 
                 const el = document.getElementById(draggingNode.id);
-                el.style.left = draggingNode.x + 'px';
-                el.style.top = draggingNode.y + 'px';
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
                 
                 renderConnections();
             }
@@ -579,10 +938,10 @@
                 
                 const fromEl = document.getElementById(connectFrom.id);
                 const fromRect = fromEl.getBoundingClientRect();
-                const x1 = fromRect.right - rect.left;
-                const y1 = fromRect.top + fromRect.height / 2 - rect.top;
-                const x2 = e.clientX - rect.left;
-                const y2 = e.clientY - rect.top;
+                const x1 = (fromRect.right - rect.left - canvasState.panX) / canvasState.scale;
+                const y1 = (fromRect.top + fromRect.height / 2 - rect.top - canvasState.panY) / canvasState.scale;
+                const x2 = (e.clientX - rect.left - canvasState.panX) / canvasState.scale;
+                const y2 = (e.clientY - rect.top - canvasState.panY) / canvasState.scale;
                 
                 tempLine.setAttribute('d', bezier(x1, y1, x2, y2));
             }
@@ -591,6 +950,11 @@
         function onMouseUp(e) {
             if (draggingNode) {
                 draggingNode = null;
+            }
+            
+            if (canvasState.isPanning) {
+                canvasState.isPanning = false;
+                canvas.classList.remove('panning');
             }
             
             if (connecting) {
@@ -628,8 +992,6 @@
         
         function renderConnections() {
             const svg = document.getElementById('connectionsLayer');
-            const canvas = document.getElementById('canvas');
-            const rect = canvas.getBoundingClientRect();
             
             const temp = svg.querySelector('.temp-line');
             svg.innerHTML = '';
@@ -644,13 +1006,11 @@
                 const toEl = document.getElementById(toNode.id);
                 if (!fromEl || !toEl) return;
                 
-                const fromRect = fromEl.getBoundingClientRect();
-                const toRect = toEl.getBoundingClientRect();
-                
-                const x1 = fromRect.right - rect.left;
-                const y1 = fromRect.top + fromRect.height / 2 - rect.top;
-                const x2 = toRect.left - rect.left;
-                const y2 = toRect.top + toRect.height / 2 - rect.top;
+                // 直接使用节点存储的坐标计算连接点
+                const x1 = fromNode.x + 150; // 节点右边缘（min-width: 150px）
+                const y1 = fromNode.y + 35;  // 节点中部（header+body ~70px 的一半）
+                const x2 = toNode.x;         // 节点左边缘
+                const y2 = toNode.y + 35;
                 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('class', 'connection-line');
@@ -671,18 +1031,22 @@
         }
         
         // ========== 后端同步 ==========
-        async function addNodeToBackend(name, type) {
+        async function addNodeToBackend(name, type, code = null) {
             if (!currentWorkflow) return;
             try {
-                await fetch(`/workflows/${currentWorkflow}/nodes`, {
+                const body = {
+                    workflow_name: currentWorkflow,
+                    node_name: name,
+                    node_type: type,
+                    config: { node_type: type, ...(code && { code }) }
+                };
+                if (code) {
+                    body.code = code;
+                }
+                await fetch(`/workflows/${encodeURIComponent(currentWorkflow)}/nodes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        workflow_name: currentWorkflow,
-                        node_name: name,
-                        node_type: type,
-                        config: { node_type: type }
-                    })
+                    body: JSON.stringify(body)
                 });
             } catch (e) {}
         }
@@ -727,8 +1091,40 @@
             nodes = [];
             connections = [];
             selectedNode = null;
-            const canvas = document.getElementById('canvas');
-            canvas.innerHTML = '<svg class="connections-layer" id="connectionsLayer"></svg>';
+            const canvasContent = document.getElementById('canvasContent');
+            // 只清空内容，保留结构
+            while (canvasContent.firstChild) {
+                canvasContent.removeChild(canvasContent.firstChild);
+            }
+            // 重新创建 SVG 层
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.className = 'connections-layer';
+            svg.id = 'connectionsLayer';
+            canvasContent.appendChild(svg);
+        }
+        
+        // ========== 画布变换控制 ==========
+        function updateCanvasTransform() {
+            const canvasContent = document.getElementById('canvasContent');
+            canvasContent.style.transform = `translate(${canvasState.panX}px, ${canvasState.panY}px) scale(${canvasState.scale})`;
+            document.getElementById('zoomLevel').textContent = Math.round(canvasState.scale * 100) + '%';
+        }
+        
+        function zoomIn() {
+            canvasState.scale = Math.min(3, canvasState.scale * 1.2);
+            updateCanvasTransform();
+        }
+        
+        function zoomOut() {
+            canvasState.scale = Math.max(0.3, canvasState.scale / 1.2);
+            updateCanvasTransform();
+        }
+        
+        function resetZoom() {
+            canvasState.scale = 1;
+            canvasState.panX = 0;
+            canvasState.panY = 0;
+            updateCanvasTransform();
         }
         
         function setStatus(msg) {

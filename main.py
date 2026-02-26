@@ -27,6 +27,7 @@ class AddNodeRequest(BaseModel):
     node_name: str
     node_type: str
     config: Optional[Dict[str, Any]] = None
+    code: Optional[str] = None  # Python 代码
 
 
 class ConnectNodesRequest(BaseModel):
@@ -79,11 +80,46 @@ def add_node(name: str, request: AddNodeRequest):
     
     workflow = workflows[name]
     
-    # 创建简单的节点函数
-    def generic_node(data: Dict[str, Any]) -> Dict[str, Any]:
-        return {**data, "_node_type": request.node_type}
+    # 根据节点类型创建不同的节点函数
+    if request.node_type == "python":
+        # Python 代码执行节点
+        code = request.code or request.config.get("code", "") if request.config else ""
+        default_code = '''# data 是输入数据字典
+# 将结果赋值给 output 变量
+output = {"result": data}
+'''
+        actual_code = code if code else default_code
+        
+        def python_node(data: Dict[str, Any]) -> Dict[str, Any]:
+            try:
+                local_vars = {"data": data, "output": {}}
+                exec(actual_code, {}, local_vars)
+                return local_vars.get("output", {})
+            except Exception as e:
+                return {"error": str(e), "output": {}}
+        
+        node_config = {"node_type": "python", "code": actual_code}
+        workflow.add_node(python_node, name=request.node_name, config=node_config)
+        
+    elif request.node_type == "start":
+        # 起始节点
+        def start_node(data: Dict[str, Any]) -> Dict[str, Any]:
+            return data or {}
+        workflow.add_node(start_node, name=request.node_name, config={"node_type": "start"})
+        
+    elif request.node_type == "end":
+        # 结束节点
+        def end_node(data: Dict[str, Any]) -> Dict[str, Any]:
+            return {"final_output": data}
+        workflow.add_node(end_node, name=request.node_name, config={"node_type": "end"})
+        
+    else:
+        # 默认处理节点
+        def generic_node(data: Dict[str, Any]) -> Dict[str, Any]:
+            return {**data, "_node_type": request.node_type}
+        
+        workflow.add_node(generic_node, name=request.node_name, config=request.config or {"node_type": request.node_type})
     
-    workflow.add_node(generic_node, name=request.node_name, config=request.config)
     return {"message": "Node added", "node": request.node_name}
 
 
