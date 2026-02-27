@@ -688,7 +688,6 @@
                 <div class="section-title">工作流</div>
                 <input type="text" id="newWorkflowName" class="input" placeholder="输入工作流名称">
                 <button class="btn btn-primary" onclick="createWorkflow()">+ 创建工作流</button>
-                <button class="btn btn-secondary" onclick="createDemoAlertWorkflow()" style="margin-top:8px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">🎮 演示：告警处理工作流</button>
                 <ul class="workflow-list" id="workflowList"></ul>
             </div>
             
@@ -757,6 +756,7 @@
                     <button class="agent-suggestion" onclick="sendAgentSuggestion('帮我创建一个简单的工作流')">创建工作流</button>
                     <button class="agent-suggestion" onclick="sendAgentSuggestion('添加一个Python计算节点')">添加节点</button>
                     <button class="agent-suggestion" onclick="sendAgentSuggestion('运行当前工作流')">运行测试</button>
+                    <button class="agent-suggestion" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;" onclick="simulateAgentDemo()">🎮 创建工作流示例</button>
                 </div>
                 
                 <div class="agent-chat-container">
@@ -1760,11 +1760,73 @@ output = {"result": data}`;
         });
 
         // ========== 演示案例：告警处理工作流 ==========
+        // 原有的演示函数，现在直接调用模拟对话版本
         async function createDemoAlertWorkflow() {
-            const workflowName = 'alert_processor';
+            await simulateAgentDemo();
+        }
+
+        // 模拟 Agent 对话演示
+        async function simulateAgentDemo() {
+            const workflowName = 'alert_processor_demo';
+            const container = document.getElementById('agentMessages');
             
-            setStatus('🎮 正在创建演示工作流...');
+            // 清空对话
+            container.innerHTML = '';
             
+            // 模拟对话步骤
+            const conversation = [
+                { role: 'user', content: '帮我创建一个告警处理工作流，能够根据告警级别自动分类处理', delay: 500 },
+                { role: 'assistant', content: '好的！我来为您创建一个告警处理工作流。这个工作流将包含以下功能：\n\n1. 接收告警输入\n2. 解析告警级别和来源\n3. 判断是否为严重告警\n4. 严重告警：立即通知（P0）\n5. 一般告警：记录日志（P2）\n\n让我开始创建...', delay: 1000 },
+                { role: 'system', content: '🛠️ 正在创建工作流 "alert_processor_demo"...', delay: 600 },
+                { role: 'system', content: '✅ 工作流创建成功', delay: 400 },
+                { role: 'system', content: '🛠️ 添加节点: start (起始节点)', delay: 400 },
+                { role: 'system', content: '🛠️ 添加节点: check_alert (解析告警)', delay: 400 },
+                { role: 'system', content: '🛠️ 添加节点: is_critical (条件判断)', delay: 400 },
+                { role: 'system', content: '🛠️ 添加节点: critical_handler (严重告警处理)', delay: 400 },
+                { role: 'system', content: '🛠️ 添加节点: normal_handler (一般告警处理)', delay: 400 },
+                { role: 'system', content: '🛠️ 添加节点: end (结束节点)', delay: 400 },
+                { role: 'system', content: '🔗 连接节点: start → check_alert', delay: 300 },
+                { role: 'system', content: '🔗 连接节点: check_alert → is_critical', delay: 300 },
+                { role: 'system', content: '🔗 连接节点: is_critical → critical_handler', delay: 300 },
+                { role: 'system', content: '🔗 连接节点: is_critical → normal_handler', delay: 300 },
+                { role: 'system', content: '🔗 连接节点: critical_handler → end', delay: 300 },
+                { role: 'system', content: '🔗 连接节点: normal_handler → end', delay: 300 },
+                { role: 'assistant', content: '✨ 告警处理工作流已创建完成！\n\n**工作流结构：**\n```\nstart → check_alert → is_critical → [critical_handler → end]\n                              ↘ [normal_handler → end]\n```\n\n您可以在左侧工作流列表中看到它，点击即可编辑。', delay: 800 }
+            ];
+            
+            // 依次显示对话
+            for (const msg of conversation) {
+                await new Promise(resolve => setTimeout(resolve, msg.delay));
+                
+                if (msg.role === 'system') {
+                    addAgentMessage(msg.content, 'system');
+                } else if (msg.role === 'user') {
+                    addAgentMessage(msg.content, 'user');
+                } else {
+                    addAgentMessage(msg.content, 'assistant');
+                }
+            }
+            
+            // 最后实际创建工作流
+            setStatus('🎮 正在生成演示工作流...');
+            await createDemoWorkflowInternal(workflowName);
+            
+            // 高亮显示工作流
+            setTimeout(() => {
+                const wfItem = document.querySelector(`[data-workflow="${workflowName}"]`);
+                if (wfItem) {
+                    wfItem.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+                    wfItem.style.color = 'white';
+                    setTimeout(() => {
+                        wfItem.style.background = '';
+                        wfItem.style.color = '';
+                    }, 2000);
+                }
+            }, 500);
+        }
+        
+        // 内部函数：实际创建工作流
+        async function createDemoWorkflowInternal(workflowName) {
             try {
                 // 1. 创建工作流
                 const createRes = await fetch('/workflows', {
@@ -1774,7 +1836,6 @@ output = {"result": data}`;
                 });
                 
                 if (!createRes.ok) {
-                    // 如果已存在，删除重新创建
                     await fetch(`/workflows/${workflowName}`, { method: 'DELETE' });
                     await fetch('/workflows', {
                         method: 'POST',
@@ -1785,11 +1846,7 @@ output = {"result": data}`;
                 
                 // 2. 添加节点
                 const nodes = [
-                    {
-                        name: 'start',
-                        type: 'start',
-                        code: null
-                    },
+                    { name: 'start', type: 'start' },
                     {
                         name: 'check_alert',
                         type: 'python',
@@ -1803,63 +1860,31 @@ output = {
     'level': level,
     'message': message,
     'source': source,
-    'timestamp': alert.get('timestamp'),
     'is_critical': level in ['critical', 'error', 'fatal']
 }`
                     },
-                    {
-                        name: 'is_critical',
-                        type: 'if',
-                        condition: "data.get('is_critical', False)"
-                    },
+                    { name: 'is_critical', type: 'if', condition: "data.get('is_critical', False)" },
                     {
                         name: 'critical_handler',
                         type: 'python',
-                        code: `# 严重告警处理
-import time
-
-alert_info = {
-    'level': '🔴 CRITICAL',
-    'message': data.get('message', ''),
-    'source': data.get('source', ''),
-    'action': '立即发送短信和邮件通知值班人员',
-    'escalation': True,
-    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
-}
-
-# 模拟发送通知
-print(f"[紧急告警] {alert_info['message']} from {alert_info['source']}")
-
-output = {
+                        code: `output = {
     'handled': True,
     'priority': 'P0',
-    'alert_info': alert_info,
-    'notification_sent': True
+    'action': '立即发送短信和邮件通知',
+    'alert': data
 }`
                     },
                     {
                         name: 'normal_handler',
                         type: 'python',
-                        code: `# 一般告警处理
-alert_info = {
-    'level': '🟡 NORMAL',
-    'message': data.get('message', ''),
-    'source': data.get('source', ''),
-    'action': '记录到日志系统，稍后处理'
-}
-
-output = {
+                        code: `output = {
     'handled': True,
     'priority': 'P2',
-    'alert_info': alert_info,
-    'notification_sent': False
+    'action': '记录到日志系统',
+    'alert': data
 }`
                     },
-                    {
-                        name: 'end',
-                        type: 'end',
-                        code: null
-                    }
+                    { name: 'end', type: 'end' }
                 ];
                 
                 for (const node of nodes) {
@@ -1869,12 +1894,8 @@ output = {
                         node_type: node.type,
                         config: { node_type: node.type }
                     };
-                    if (node.code) {
-                        body.code = node.code;
-                    }
-                    if (node.condition) {
-                        body.condition = node.condition;
-                    }
+                    if (node.code) body.code = node.code;
+                    if (node.condition) body.condition = node.condition;
                     
                     await fetch(`/workflows/${workflowName}/nodes`, {
                         method: 'POST',
@@ -1905,39 +1926,15 @@ output = {
                     });
                 }
                 
-                // 4. 刷新工作流列表
+                // 4. 刷新并加载
                 await loadWorkflowList();
-                
-                // 5. 加载并显示工作流
                 await loadWorkflow(workflowName);
                 
-                // 6. 显示成功提示
-                setStatus(`✅ 演示工作流 "${workflowName}" 创建成功！包含 ${nodes.length} 个节点`);
-                
-                // 7. 在 Agent 面板显示说明
-                const agentContainer = document.getElementById('agentMessages');
-                agentContainer.innerHTML = `
-                    <div class="agent-message system">🎮 演示案例已加载</div>
-                    <div class="agent-message assistant">
-                        <strong>告警处理工作流 (${workflowName})</strong><br><br>
-                        
-                        <strong>流程说明：</strong><br>
-                        1. <strong>start</strong> - 接收告警输入<br>
-                        2. <strong>check_alert</strong> - 解析告警级别和来源<br>
-                        3. <strong>is_critical</strong> - 判断是否为严重告警<br>
-                        4. <strong>critical_handler</strong> - 严重告警处理（P0）<br>
-                        5. <strong>normal_handler</strong> - 一般告警处理（P2）<br>
-                        6. <strong>end</strong> - 结束<br><br>
-                        
-                        <strong>测试运行：</strong><br>
-                        点击"运行"按钮，输入测试数据：<br>
-                        <code>{"alert": {"level": "critical", "message": "CPU 使用率 99%", "source": "server-01"}}</code>
-                    </div>
-                `;
+                setStatus(`✅ 演示工作流 "${workflowName}" 创建成功！`);
                 
             } catch (e) {
                 console.error(e);
-                setStatus('❌ 创建演示工作流失败: ' + e.message);
+                setStatus('❌ 创建失败: ' + e.message);
             }
         }
     </script>
