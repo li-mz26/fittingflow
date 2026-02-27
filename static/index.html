@@ -143,6 +143,34 @@
             background: #f8f9fa;
             margin-bottom: 8px;
             cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .workflow-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .workflow-delete-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 50%;
+            background: #ff4d4f;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .workflow-delete-btn:hover {
+            background: #ff7875;
         }
         
         .workflow-item:hover {
@@ -1065,9 +1093,38 @@ output = {"result": data}`;
             const list = document.getElementById('workflowList');
             list.innerHTML = workflows.map(wf => `
                 <li class="workflow-item ${currentWorkflow === wf.name ? 'active' : ''}" onclick="loadWorkflow('${wf.name}')">
-                    ${wf.name}
+                    <span class="workflow-name">${wf.name}</span>
+                    <button class="workflow-delete-btn" title="删除工作流" onclick="deleteWorkflow(event, '${wf.name}')">×</button>
                 </li>
             `).join('');
+        }
+
+        async function deleteWorkflow(event, name) {
+            event.stopPropagation();
+
+            if (!confirm(`确认删除工作流「${name}」吗？该操作不可恢复。`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/workflows/${encodeURIComponent(name)}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || '删除失败');
+                }
+
+                if (currentWorkflow === name) {
+                    currentWorkflow = null;
+                    clearCanvas();
+                    resetZoom();
+                    setStatus(`✅ 已删除工作流: ${name}`);
+                }
+
+                await fetchWorkflows();
+            } catch (e) {
+                setStatus('❌ 删除失败: ' + e.message);
+                console.error(e);
+            }
         }
         
         async function createWorkflow() {
