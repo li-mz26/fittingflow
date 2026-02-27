@@ -855,11 +855,11 @@ output = {'result': data}"></textarea>
 
 output = {"result": data}`;
         
-        function showCodeEditor(nodeName, x, y) {
-            pendingPythonNode = { name: nodeName, x, y };
+        function showCodeEditor(nodeName, x, y, code = defaultPythonCode, nodeId = null) {
+            pendingPythonNode = { name: nodeName, x, y, code, nodeId };
             const modal = document.getElementById('codeEditorModal');
             const editor = document.getElementById('codeEditor');
-            editor.value = defaultPythonCode;
+            editor.value = code || defaultPythonCode;
             modal.classList.add('visible');
             editor.focus();
         }
@@ -874,19 +874,17 @@ output = {"result": data}`;
             if (!pendingPythonNode) return;
             
             const code = document.getElementById('codeEditor').value;
-            const { name, x, y } = pendingPythonNode;
+            const { name, x, y, nodeId } = pendingPythonNode;
+            const isEditing = Boolean(nodeId);
             
-            // 创建节点
-            const node = {
-                id: `node_${++nodeIdCounter}`,
-                name: name,
-                type: 'python',
-                x: x,
-                y: y,
-                code: code
-            };
-            nodes.push(node);
-            renderOneNode(node);
+            if (isEditing) {
+                const existingNode = nodes.find(n => n.id === nodeId);
+                if (existingNode) {
+                    existingNode.code = code;
+                }
+            } else {
+                addNode(name, 'python', x, y, null, { code });
+            }
             
             // 发送到后端
             if (currentWorkflow) {
@@ -903,12 +901,12 @@ output = {"result": data}`;
                         })
                     });
                 } catch (e) {
-                    console.error('Failed to add Python node to backend:', e);
+                    console.error('Failed to save Python node to backend:', e);
                 }
             }
             
             closeCodeEditor();
-            setStatus(`✅ Python 节点已添加: ${name}`);
+            setStatus(isEditing ? `✅ Python 节点已更新: ${name}` : `✅ Python 节点已添加: ${name}`);
         }
         
         // 点击模态框外部关闭
@@ -1183,7 +1181,9 @@ output = {"result": data}`;
                     const nodeType = node.config?.node_type || node.config?._node_type || 'basic';
                     // 使用节点名称作为ID，这样与edges中的source/target一致
                     nameToIdMap[node.name] = node.name;
-                    addNode(node.name, nodeType, 50 + i * 200, 100, node.name);
+                    addNode(node.name, nodeType, 50 + i * 200, 100, node.name, {
+                        code: node.config?.code || defaultPythonCode
+                    });
                 });
                 
                 // 将edges中的节点名称转换为ID
@@ -1236,13 +1236,14 @@ output = {"result": data}`;
             setStatus(`✅ 已添加: ${name}`);
         }
         
-        function addNode(name, type, x, y, existingId = null) {
+        function addNode(name, type, x, y, existingId = null, extraData = {}) {
             const node = {
                 id: existingId || name,  // 使用name作为ID，保持一致性
                 name: name,
                 type: type,
                 x: x,
-                y: y
+                y: y,
+                ...extraData
             };
             nodes.push(node);
             renderOneNode(node);
@@ -1280,6 +1281,14 @@ output = {"result": data}`;
                 if (e.target.classList.contains('port') || e.target.classList.contains('node-delete')) return;
                 e.stopPropagation();
                 selectNode(node.id);
+            };
+
+            // 双击 Python 节点编辑代码
+            el.ondblclick = (e) => {
+                if (e.target.classList.contains('port') || e.target.classList.contains('node-delete')) return;
+                if (node.type !== 'python') return;
+                e.stopPropagation();
+                showCodeEditor(node.name, node.x, node.y, node.code || defaultPythonCode, node.id);
             };
             
             // 拖拽移动
