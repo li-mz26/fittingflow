@@ -852,10 +852,21 @@ output = {"result": data}`;
                 // 重置节点 ID 计数器
                 nodeIdCounter = 0;
                 
+                // 建立节点名称到ID的映射，使用节点名称作为ID
+                const nameToIdMap = {};
+                
                 wf.nodes.forEach((node, i) => {
                     const nodeType = node.config?.node_type || node.config?._node_type || 'basic';
-                    addNode(node.name, nodeType, 50 + i * 200, 100);
+                    // 使用节点名称作为ID，这样与edges中的source/target一致
+                    nameToIdMap[node.name] = node.name;
+                    addNode(node.name, nodeType, 50 + i * 200, 100, node.name);
                 });
+                
+                // 将edges中的节点名称转换为ID
+                connections = (wf.edges || []).map(e => ({
+                    source: nameToIdMap[e.source] || e.source,
+                    target: nameToIdMap[e.target] || e.target
+                }));
                 
                 renderConnections();
                 setStatus(`✅ 已加载: ${name} (${wf.nodes.length} 个节点)`);
@@ -901,9 +912,9 @@ output = {"result": data}`;
             setStatus(`✅ 已添加: ${name}`);
         }
         
-        function addNode(name, type, x, y) {
+        function addNode(name, type, x, y, existingId = null) {
             const node = {
-                id: `node_${++nodeIdCounter}`,
+                id: existingId || name,  // 使用name作为ID，保持一致性
                 name: name,
                 type: type,
                 x: x,
