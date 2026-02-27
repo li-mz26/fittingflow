@@ -392,24 +392,87 @@ def agent_status():
 
 @app.post("/agent/chat")
 async def agent_chat(request: AgentChatRequest):
-    """Agent 对话接口"""
+    """Agent 对话接口 - 实际调用大模型 API"""
     import os
-    if not os.getenv("AGENT_API_KEY"):
+    api_key = os.getenv("AGENT_API_KEY")
+    api_base = os.getenv("AGENT_API_BASE", "https://api.openai.com/v1")
+    model = os.getenv("AGENT_MODEL", "gpt-4")
+    
+    if not api_key:
         raise HTTPException(
             status_code=503, 
             detail="Agent not configured. Please set AGENT_API_KEY in .env file."
         )
     
-    # 简单的模拟响应
-    last_message = request.messages[-1].content if request.messages else ""
+    try:
+        from openai import AsyncOpenAI
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="OpenAI client not installed. Run: pip install openai"
+        )
     
-    response = {
-        "responses": [{
-            "content": f"收到消息: {last_message}\n\nAgent 功能需要配置 OpenAI 兼容的 API 才能正常使用。"
-        }]
-    }
+    client = AsyncOpenAI(api_key=api_key, base_url=api_base)
     
-    return response
+    # 构建系统提示词
+    system_prompt = """你是 FittingFlow 工作流助手，专门帮助用户创建工作流。
+
+可用工具：
+- create_workflow(name): 创建工作流
+- add_node(workflow_name, node_name, node_type, code=None): 添加节点
+- connect_nodes(workflow_name, source_node, target_node): 连接节点
+- run_workflow(workflow_name, input_data): 运行工作流
+- get_workflow(name): 获取工作流详情
+- list_workflows(): 列出所有工作流
+
+节点类型：start, end, process, python, if
+
+Python节点代码示例：
+```python
+# data 是输入数据字典
+output = {"sum": data.get("a", 0) + data.get("b", 0)}
+```
+
+请用中文回复，帮助用户创建工作流。"""
+
+    # 构建消息列表
+    messages = [{"role": "system", "content": system_prompt}]
+    for msg in request.messages:
+        messages.append({"role": msg.role, "content": msg.content})
+    
+    try:
+        if request.stream:
+            # 流式响应
+            async def generate():
+                try:
+                    async for chunk in await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        temperature=0.7,
+                        stream=True
+                    ):
+                        delta = chunk.choices[0].delta
+                        if delta.content:
+                            yield json.dumps({"content": delta.content}) + "\n"
+                except Exception as e:
+                    yield json.dumps({"error": str(e)}) + "\n"
+            
+            return StreamingResponse(generate(), media_type="text/event-stream")
+        else:
+            # 非流式响应
+            response = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.7
+            )
+            content = response.choices[0].message.content
+            
+            return {
+                "responses": [{"content": content}]
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/agent/skill")
