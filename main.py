@@ -9,6 +9,21 @@ import os
 from fittingflow import Workflow, Node, Context
 from tools import ExternalToolGateway, ToolAuth, AuthType
 
+# 加载 .env 文件（手动解析，不依赖外部库）
+def load_dotenv():
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip().strip('"\'')
+                    os.environ.setdefault(key, value)
+
+load_dotenv()
+
 app = FastAPI(title="FittingFlow", version="0.1.0")
 
 # 内存存储工作流
