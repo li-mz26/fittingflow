@@ -316,6 +316,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
+            z-index: 100;
         }
         
         .connection-line {
@@ -324,6 +325,12 @@
             stroke-width: 3;
             pointer-events: stroke;
             cursor: pointer;
+            transition: stroke 0.2s, stroke-width 0.2s;
+        }
+        
+        .connection-line:hover {
+            stroke: #764ba2;
+            stroke-width: 5;
         }
         
         /* 工具栏 */
@@ -1044,10 +1051,9 @@ output = {"result": data}`;
                     svg.appendChild(tempLine);
                 }
                 
-                const fromEl = document.getElementById(connectFrom.id);
-                const fromRect = fromEl.getBoundingClientRect();
-                const x1 = (fromRect.right - rect.left - canvasState.panX) / canvasState.scale;
-                const y1 = (fromRect.top + fromRect.height / 2 - rect.top - canvasState.panY) / canvasState.scale;
+                // 使用与 renderConnections 一致的坐标计算方式
+                const x1 = connectFrom.x + 150; // 节点右边缘
+                const y1 = connectFrom.y + 35;  // 节点中部
                 const x2 = (e.clientX - rect.left - canvasState.panX) / canvasState.scale;
                 const y2 = (e.clientY - rect.top - canvasState.panY) / canvasState.scale;
                 
@@ -1123,9 +1129,14 @@ output = {"result": data}`;
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('class', 'connection-line');
                 path.setAttribute('d', bezier(x1, y1, x2, y2));
-                path.onclick = () => {
+                path.setAttribute('data-source', conn.source);
+                path.setAttribute('data-target', conn.target);
+                path.onclick = (e) => {
+                    e.stopPropagation();
                     if (confirm('删除连线？')) {
-                        connections.splice(i, 1);
+                        const src = path.getAttribute('data-source');
+                        const tgt = path.getAttribute('data-target');
+                        connections = connections.filter(c => !(c.source === src && c.target === tgt));
                         renderConnections();
                     }
                 };
